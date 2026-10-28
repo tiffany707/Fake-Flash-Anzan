@@ -1,5 +1,8 @@
-from django.shortcuts import render
+from django.http import FileResponse
+
+from django.conf import settings
 
 
 def home_view(request):
-    return render(request, "main/index.html")
+    page = settings.BASE_DIR / "public" / "index.html"
+    return FileResponse(page.open("rb"), content_type="text/html; charset=utf-8")
