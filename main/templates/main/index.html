@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flash Anzan</title>
+  <style>
+    :root {
+      --bg: #0e1116;
+      --fg: #f5f7fa;
+      --muted: #9aa3ad;
+      --green: #2fce74;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .screen {
+      display: none;
+      text-align: center;
+      width: min(92vw, 640px);
+    }
+
+    .screen.active { display: block; }
+
+    h1 {
+      font-size: clamp(2.6rem, 8vw, 4.6rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin: 0 0 1.6rem;
+    }
+
+    button, input { font: inherit; }
+
+    button {
+      background: var(--fg);
+      color: var(--bg);
+      border: 0;
+      border-radius: 999px;
+      padding: 0.85rem 2.1rem;
+      font-size: 1.15rem;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    button:hover { opacity: 0.92; }
+
+    .flash-number {
+      font-size: clamp(4rem, 16vw, 8rem);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.04em;
+      min-height: 1.15em;
+    }
+
+    label {
+      display: block;
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    input[type="number"] {
+      width: min(100%, 280px);
+      font-size: 2rem;
+      text-align: center;
+      padding: 0.55rem 0.8rem;
+      border-radius: 12px;
+      border: 2px solid #2a313a;
+      background: #171c23;
+      color: var(--fg);
+      margin-bottom: 1.25rem;
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    input:focus {
+      outline: 2px solid var(--fg);
+      border-color: transparent;
+    }
+
+    .correct {
+      color: var(--green);
+      font-size: clamp(3rem, 10vw, 5rem);
+      font-weight: 700;
+      margin: 0 0 0.35rem;
+    }
+
+    .again-prompt {
+      color: var(--muted);
+      font-size: 1.4rem;
+      margin: 0 0 1.3rem;
+    }
+  </style>
+</head>
+<body>
+  <section id="start" class="screen active">
+    <h1>Flash Anzan</h1>
+    <button id="start-btn" type="button">Start</button>
+  </section>
+
+  <section id="flash" class="screen" aria-live="polite">
+    <div id="flash-number" class="flash-number"></div>
+  </section>
+
+  <section id="answer" class="screen">
+    <form id="answer-form">
+      <label for="guess">Enter a number</label>
+      <input id="guess" type="number" inputmode="numeric" required>
+      <button type="submit">Submit</button>
+    </form>
+  </section>
+
+  <section id="result" class="screen">
+    <p class="correct">Correct!</p>
+    <p class="again-prompt">Try again?</p>
+    <button id="again-btn" type="button">Try again</button>
+  </section>
+
+  <script>
+    const FLASH_COUNT = 8;
+    const SHOW_MS = 520;
+    const GAP_MS = 160;
+
+    const screens = {
+      start: document.getElementById("start"),
+      flash: document.getElementById("flash"),
+      answer: document.getElementById("answer"),
+      result: document.getElementById("result"),
+    };
+    const flashNumber = document.getElementById("flash-number");
+    const guess = document.getElementById("guess");
+
+    function show(name) {
+      for (const screen of Object.values(screens)) {
+        screen.classList.remove("active");
+      }
+      screens[name].classList.add("active");
+    }
+
+    function randomNumber() {
+      return 1000 + Math.floor(Math.random() * 9000);
+    }
+
+    function wait(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    let flashing = false;
+
+    async function runFlash() {
+      if (flashing) return;
+      flashing = true;
+      show("flash");
+      flashNumber.textContent = "";
+      for (let i = 0; i < FLASH_COUNT; i += 1) {
+        flashNumber.textContent = String(randomNumber());
+        await wait(SHOW_MS);
+        flashNumber.textContent = "";
+        await wait(GAP_MS);
+      }
+      guess.value = "";
+      show("answer");
+      guess.focus();
+      flashing = false;
+    }
+
+    document.getElementById("start-btn").addEventListener("click", runFlash);
+    document.getElementById("again-btn").addEventListener("click", () => show("start"));
+
+    document.getElementById("answer-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (guess.value.trim() === "") return;
+      show("result");
+    });
+  </script>
+</body>
+</html>
